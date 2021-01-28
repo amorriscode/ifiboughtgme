@@ -18,7 +18,9 @@ export default function Home() {
 
   useEffect(() => {
     if (currentPrice) {
-      setEarnings(currentPrice.multiply(shares))
+      setEarnings(
+        currentPrice.multiply(shares).subtract(price.multiply(shares))
+      )
 
       const currentTotalValue = currentPrice.value * shares
       const purchaseValue = price.value * shares
@@ -88,7 +90,7 @@ export default function Home() {
       </div>
 
       <div className="text-3xl lg:text-6xl text-center lg:flex justify-center items-center space-x-2">
-        <p>I would have</p>
+        <p>I would have earned</p>
 
         <p className="font-serif font-bold text-white">
           {earnings.format()}{' '}
