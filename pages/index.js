@@ -1,63 +1,128 @@
+import { useState, useEffect } from 'react'
+import currency from 'currency.js'
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
 
 export default function Home() {
+  const [shares, setShares] = useState(1)
+  const [price, setPrice] = useState(currency(1))
+  const [earnings, setEarnings] = useState(currency(0))
+  const [earningPercentage, setEarningPercentage] = useState(0)
+  const [currentPrice, setCurrentPrice] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/gme').then(async (res) => {
+      const { c } = await res.json()
+      setCurrentPrice(currency(c))
+    })
+  }, [])
+
+  useEffect(() => {
+    if (currentPrice) {
+      setEarnings(currentPrice.multiply(shares))
+
+      const currentTotalValue = currentPrice.value * shares
+      const purchaseValue = price.value * shares
+
+      setEarningPercentage(
+        ((currentTotalValue - purchaseValue) / purchaseValue) * 100
+      )
+    }
+  }, [currentPrice, shares, price.value])
+
+  if (!currentPrice) {
+    return <div className="min-h-screen min-w-screen bg-green-500"></div>
+  }
+
   return (
-    <div className={styles.container}>
+    <div className="min-h-screen min-w-screen flex flex-col justify-center items-center bg-gradient-to-b from-green-700 to-green-900 text-green-300 space-y-8 tracking-widest leading-loose">
       <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>If I bought $GME...</title>
+        <link
+          rel="icon"
+          href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>"
+        />
+        <meta property="og:image" content="/og.png" />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+      <div className="text-3xl lg:text-6xl flex justify-center items-center space-x-2">
+        <p>If I bought</p>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
+        <span
+          className="font-bold font-serif text-white"
+          contentEditable
+          suppressContentEditableWarning
+          onInput={(e) => setShares(e.target.innerText)}
+        >
+          1
+        </span>
+
+        <p>share{shares === '1' ? '' : 's'}</p>
+      </div>
+
+      <div className="text-3xl lg:text-6xl flex justify-center items-center space-x-2">
+        <p>
+          of{' '}
+          <a
+            className="font-serif font-bold hover:text-white transition duration-300 ease-in-out"
+            href="https://finance.yahoo.com/quote/GME?p=GME&.tsrc=fin-srch"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            $GME
+          </a>{' '}
+          at
         </p>
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
+        <p className="font-bold font-serif text-white">
+          $
+          <span
+            contentEditable
+            suppressContentEditableWarning
+            onInput={(e) => setPrice(currency(e.target.innerText))}
           >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+            1
+          </span>
+        </p>
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+        <p>per share</p>
+      </div>
 
-      <footer className={styles.footer}>
+      <div className="text-3xl lg:text-6xl text-center lg:flex justify-center items-center space-x-2">
+        <p>I would have</p>
+
+        <p className="font-serif font-bold text-white">
+          {earnings.format()}{' '}
+          {earningPercentage !== Infinity && (
+            <span
+              className={`${
+                earningPercentage < 0 ? 'text-red-300' : 'text-green-300'
+              }`}
+            >
+              ({Math.floor(earningPercentage)}%)
+            </span>
+          )}
+        </p>
+      </div>
+
+      <p className="uppercase font-bold text-xs pt-4">
         <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
+          className="font-serif font-extrabold hover:text-white transition duration-300 ease-in-out"
+          href="https://finance.yahoo.com/quote/GME?p=GME&.tsrc=fin-srch"
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noreferrer noopener"
         >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
+          $GME
+        </a>{' '}
+        is currently trading at {currentPrice.format()}
+      </p>
+
+      <footer className="absolute bottom-0 p-4 font-bold hover:text-white transition duration-300 ease-in-out">
+        <a
+          href="https://anthonymorris.dev"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Made with 💸 in Vancouver
         </a>
       </footer>
     </div>
